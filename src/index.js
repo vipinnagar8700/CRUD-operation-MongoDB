@@ -7,15 +7,24 @@ var Router = require('named-routes');
 var router = new Router();
 router.extendExpress(app);
 router.registerAppHelpers(app);
- 
+
 
 // installing bcrypt module to convert login [password into a hashed password]
 const bcrypt = require("bcrypt");
 
 // installing Nodemailer allow us to send email.
-const nodemailer = require("nodemailer");
+// const nodemailer = require("nodemailer");
+const nodemailer = require('nodemailer');
+// const jwt = require('jsonwebtoken');
+
+
+
 
 // RESET PASSWORD//======================================================================
+const crypto = require("crypto");//user to generate random token 
+
+const jwt = require('jsonwebtoken'); //to generate token
+
 
 
 
@@ -61,10 +70,10 @@ const Bike = mongoose.model('Bike', bikeSchema);
 
 app.get('/', async function (req, res) {
   // const b = " ";
-  let bike = await Bike.find({})
+  let bike = await Bike.find({}).limit(10);
   // console.log(bike);
   res.render('index', { bike });
-  
+
 });
 // End
 // Add Data into database form render
@@ -127,7 +136,7 @@ app.get('/edit/:id', async function (req, res) {
 //     }, {
 //       $set: { name: "name", price: 'price', color: "color" }
 //     });
-   
+
 //     // {"acknowledged" : true,"matche"}
 //     console.log(k);
 //   }
@@ -221,15 +230,65 @@ const userSchema = mongoose.Schema({
 
   },
   password: { type: String, required: true },
-  token: {
-    type: String, default: ''},
+  verificationToken: {
+    type: String, default: ''
+  },
+  joined: { type: Date, default: Date.now },
+  isVerified: {type: Boolean,required: true, default: false
 
-  
-  joined: { type: Date, default: Date.now }
+  }
 });
+
 // creating new model for User
 
 const User = mongoose.model('User', userSchema);
+
+
+
+
+// Create a nodemailer transport
+const transport = nodemailer.createTransport({
+  service: 'Gmail',
+  auth: {
+    user: 'myemail@gmail.com',
+    pass: 'mypassword'
+  }
+});
+
+// Function to send verification email
+function sendVerificationEmail(email, token) {
+  const mailOptions = {
+    from: 'vipinnagar8700@gmail.com',
+    to: email,
+    subject: 'Verify Your Email',
+    html: `<p>Please click the following link to verify your email:</p><p>http://localhost:2222/verify?token=${token}</p>`
+  };
+  transport.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.log(error);
+    } else {
+      console.log('Email sent: ' + info.response);
+    }
+  });
+}
+
+// Route to handle verification requests
+
+// app.get('/verify', (req, res) => {
+//   const token = req.query.token;
+//   User.findOneAndUpdate({ verificationToken: token }, { isVerified: true })
+//     .then((user) => {
+//       if (!user) {
+//         res.send('Invalid verification token.');
+//       } else {
+//         res.send('Your email has been verified.');
+//       }
+//     })
+//     .catch((error) => {
+//       console.log(error);
+//       res.send('Verification failed.');
+//     });
+// });
 
 // Register user
 // app.post('/api/register', function (req, res) {
@@ -251,10 +310,10 @@ const User = mongoose.model('User', userSchema);
 
 // });
 
-// register
+// register with a set of 10 limit on window
 app.get('/register', async function (req, res) {
-  let user = await User.find({})
-  console.log(user);
+  let user = await User.find({}).limit(10);
+  // console.log(user);
   res.render('register', { user });
 
 });
@@ -277,6 +336,8 @@ app.post("/api/register", async (req, res) => {
     res.status(500).send("User Already Exists Please  try to login your Account or forgot password with Email");
   }
 });
+
+
 
 // end of Register page 
 
@@ -315,15 +376,22 @@ app.get('/login', async function (req, res) {
   res.render('login');
 });
 
+// LogOut api
+
+// app.get('/logOut', admin.logOut async function (req, res) {
+//   res.render('index');
+
+// });
+
 
 // End of login page
 app.get('/api/:id', async function (req, res) {
-   
+
   console.log(req.body)
-  let bike = await User.findOne({},'_id')
-  res.render('Home', {id:bike._id});
+  let bike = await User.findOne({}, '_id')
+  res.render('Home', { id: bike._id });
   // res.render('Home')
-  
+
 });
 
 
@@ -337,21 +405,36 @@ app.get('/forgotPassword', async function (req, res) {
 
 });
 
-app.post('/api/forgot', async function (res, res) {
-const thisUser = getUser (req.body.email);
-if (thisUser){
-  const id = uuidv1();
-  const request = {
-    id ,
-    email:thisUser.email,
 
-  };
-  CreateResetRequest(request);
-  SendResetLink(thisUser.email,id);
-}
-res.status(200).json();
+app.post("/password-reset-link", async (req, res) => {
+  try {
+    const { email } = req.body;
 
-});  
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).send("User with given email doesn't exist");
+    }
+
+    let token = await User.findOne({ userId: user._id });
+    if (!token) {
+      token = await new User({
+        userId: user._id,
+        token: crypto.randomBytes(32).toString("hex"),
+      }).save();
+    }
+
+    const resetLink = `${process.env.BASE_URL}/password-reset/${user._id}/${token.token}`;
+    await sendEmail(user.email, "Password reset link", resetLink);
+
+    res.send("Password reset link sent to your email account");
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("An error occurred");
+  }
+});
+
+
+
 
 
 // for reset password send Mail
@@ -361,23 +444,25 @@ res.status(200).json();
 // ==========================================fetch all Data of users===================================
 app.get('/fetchUser', (req, res) => {
   User.find({}).then((useritems) => {
-    // res.send(useritems);
-    console.log(useritems)
+    res.send(useritems);
+    // console.log(useritems);
   })
 });
 
 
 // // Count data From dataBase and show on Home page
 
-app.get('/api/totalUser', (req, res) => {
-  User.count({}).then((useritems) => {
-    console.log(useritems); // add this line to check if useritems is defined
-    res.render('Home', { User:useritems  });
-  }).catch((err) => {
-    console.error(err);
-    res.status(500).send('Internal Server Error');
-  });
-});
+// app.get('/api/totalUser', (req, res) => {
+//   User.count({}).then((useritems) => {
+//     console.log(useritems); // add this line to check if useritems is defined
+//     // res.render('Home', { User:useritems  });
+//   }).catch((err) => {
+//     console.error(err);
+//     res.status(500).send('Internal Server Error');
+//   });
+// });
+
+
 
 
 // //  Render first page
