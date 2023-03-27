@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home </title>
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.0.0-beta2/css/bootstrap.min.css"
+        integrity="sha512-aqT9YD5gLuLBr6ipQAS+72o5yHKzgZbGxEh6iY8lW/r6gG14e2kBTAJb8XrxzZrMOgSmDqtLaF76T0Z6YY2IHg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css"
+        integrity="sha512-HK5fgLBL+xu6dm/Ii3z4xhlSUyZgTT9tuc/hSrtw6uzJOvgRr2a9jyxxT1ely+B+xFAmJKVSTbpM/CuL7qxO8w=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.0.0-beta2/js/bootstrap.bundle.min.js"
+        integrity="sha512-43iShtbiyImxjjU4a9rhXBy7eKtIsrpll8xKhe1ghKqh5NyfME8phZs5JRFZpRBe1si44WM3tNmnqMym7JRmDQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.0.1/js/bootstrap.bundle.min.js"
+        integrity="sha512-sH8JPhKJUeA9PWk3eOcOl8U+lfZTgtBXD41q6cO/slwxGHCxKcW45K4oPCUhHG7NMB4mbKEddVmPuTXtpbCbFA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+</head>
+
+<body>
+
+    <%- include('navbar') %>
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <div class="card m-4 bg-" style="width:600px">
+                        <div class="card-body">
+
+                            <% if (typeof successMessage !=='undefined' ) { %>
+                                <div id="message">
+                                    <%= successMessage %>
+                                </div>
+                                <% } %>
+
+                                    <h1 class="form-group text-center">
+                                        <b>Bike Details</b>
+
+                                    </h1>
+
+                                    <table class="table-responsive">
+                                        <table class="table">
+                                            <thead class="thead-dark bg-danger">
+                                                <tr>
+                                                    <th scope="col">ID</th>
+                                                    <th scope="col">Name</th>
+                                                    <th scope="col">Price</th>
+                                                    <th scope="col">Color</th>
+                                                    <th scope="col">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+
+                                                    <% for(let b of bike) {%>
+                                                <tr>
+                                                    <td>
+                                                        <%= b._id %>
+                                                    </td>
+                                                    <td>
+                                                        <%= b.name %>
+                                                    </td>
+                                                    <td>
+                                                        <%= b.price %>
+                                                    </td>
+                                                    <td>
+                                                        <%= b. color %>
+                                                    </td>
+                                                    <td>
+                                                        <div class="row">
+                                                            <div class="col-sm">
+                                                                <ul class="list-inline m-0">
+                                                                    <div class="row">
+                                                                        <div class="col-4">
+                                                                            <li class="list-inline-item">
+                                                                                <a class="btn btn-success btn-sm rounded-0"
+                                                                                    href="/edit/<%= b._id%>"
+                                                                                    type="button"><i
+                                                                                        class="fa fa-edit"></i></a>
+                                                                            </li>
+                                                                        </div>
+                                                                        <div class="col-2">
+                                                                            <li class="list-inline-item">
+
+                                                                                <a class="btn btn-danger btn-sm rounded-0"
+                                                                                    href="/delete/<%= b._id%>" id=" "><i
+                                                                                        class="fa fa-trash"></i></a>
+                                                                            </li>
+                                                                        </div>
+                                                                    </div>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <% } %>
+
+
+                                            </tbody>
+                                        </table>
+
+
+                                    </table>
+                        </div>
+
+
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+</html>

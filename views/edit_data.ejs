@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Details</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.0.0-beta2/js/bootstrap.bundle.min.js"
+        integrity="sha512-43iShtbiyImxjjU4a9rhXBy7eKtIsrpll8xKhe1ghKqh5NyfME8phZs5JRFZpRBe1si44WM3tNmnqMym7JRmDQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.0.0-beta2/css/bootstrap.min.css"
+        integrity="sha512-aqT9YD5gLuLBr6ipQAS+72o5yHKzgZbGxEh6iY8lW/r6gG14e2kBTAJb8XrxzZrMOgSmDqtLaF76T0Z6YY2IHg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css"
+        integrity="sha512-HK5fgLBL+xu6dm/Ii3z4xhlSUyZgTT9tuc/hSrtw6uzJOvgRr2a9jyxxT1ely+B+xFAmJKVSTbpM/CuL7qxO8w=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+
+<body>
+    <%- include('navbar') %>
+        <div class="container">
+            <div class="card align-content-center m-3" style="width:500px">
+                <div class="card-body bg-gradient ">
+                    <h1 class="form-group text-center"><b>Update Details</b> </h1>
+
+                    <form action="/update" class="form-group" method="POST">
+                        <div class="form-group py-3">
+                            <label for="name"> Bike Name</label>
+                            <input type="hidden" class="form-control " name="id" value="<%= bike.id  %>">
+                            <input type="text" class="form-control  " value="<%= bike.name  %>" id="name" name="name"
+                                required>
+
+                        </div>
+                        <div class="form-group py-1">
+                            <label for="price"> Price</label>
+                            <input type="text" class="form-control " value="<%= bike.price %>" id="price" name="price"
+                                required>
+
+                        </div>
+                        <div class="form-group  py-1">
+                            <label for=" color"> Color</label>
+                            <input type="text" class="form-control" value="<%= bike.color %>" id="color" name="color"
+                                required>
+
+                        </div>
+                        <div class="mb-3 d-grid">
+                            <button type="submit" class="btn btn-danger py-2 m-3">Update</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+
+</body>
+
+</html>

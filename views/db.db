@@ -1,0 +1,46 @@
+
+// MongoDB connection
+const mongoose = require('mongoose');
+
+// Connection URL and database name
+const url = 'mongodb://localhost:27017/EmployeeDB';
+
+// Use connect method to connect to the server
+mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => {
+    console.log('Connected successfully to server');
+
+    // Define a schema for the Product collection
+    const employeeSchema = new mongoose.Schema({
+      name: String,
+      price: Number,
+      color: String
+    });
+
+    // Create a model for the Product collection
+    const employee = mongoose.model('employee', employeeSchema)
+
+    // Create a new document and save it to the database
+    ({
+      name: 'employee',
+      price: 10.99,
+      color: 'red'
+    });
+
+    employee.save()
+      .then(result => {
+        console.log('Document inserted');
+        console.log(result);
+
+        mongoose.connection.close();
+      })
+      .catch(err => {
+        throw err;
+      });
+  })
+  .catch(err => {
+    throw err;
+  });
+
+
+

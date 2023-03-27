@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Bike Details Add</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.0.0-beta2/js/bootstrap.bundle.min.js"
+        integrity="sha512-43iShtbiyImxjjU4a9rhXBy7eKtIsrpll8xKhe1ghKqh5NyfME8phZs5JRFZpRBe1si44WM3tNmnqMym7JRmDQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.0.0-beta2/css/bootstrap.min.css"
+        integrity="sha512-aqT9YD5gLuLBr6ipQAS+72o5yHKzgZbGxEh6iY8lW/r6gG14e2kBTAJb8XrxzZrMOgSmDqtLaF76T0Z6YY2IHg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css"
+        integrity="sha512-HK5fgLBL+xu6dm/Ii3z4xhlSUyZgTT9tuc/hSrtw6uzJOvgRr2a9jyxxT1ely+B+xFAmJKVSTbpM/CuL7qxO8w=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+
+<body>
+    <%- include('navbar') %>
+        <div class="container">
+            <div class="card align-content-center m-3" style="width:500px">
+                <div class="card-body bg-gradient ">
+                    <h1 class="form-group text-center"><b>Update Bike Details</b> </h1>
+
+                    <form  id="update_user" class="form-group"  method="POST">
+                        <div class="form-group py-3">
+                            <label for="name"> Bike Name</label>
+                            <input type="hidden" class="form-control " name="id" value="<%= user._id %>">
+                            <input type="text" class="form-control " value="<%= user.name %>" name="name" placeholder="@hero" required>
+
+                        </div>
+                        <div class="form-group py-1">
+                            <label for="Price"> Price</label>
+                            <input type="text" class="form-control " value="<%= user.price %>" name="price" placeholder="$0000"
+                                required>
+
+                        </div>
+                        <div class="form-group  py-1">
+                            <label for=" Color"> Color</label>
+                            <input type="text" class="form-control " value="<%= user.color %>" name="color" placeholder="red"
+                                required>
+
+                        </div>
+                        <div class="mb-3 d-grid">
+                            <input type="submit" name="Update"  class="btn btn-danger py-2 m-3">
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+</body>
+
+</html>
