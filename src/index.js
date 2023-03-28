@@ -1,6 +1,7 @@
 const express = require("express");
 // HTTP request logger middleware for Node. js. It simplifies the process of logging requests to your application.
 const bodyparser = require('body-parser');
+
 const app = express();
 // intalling named routes
 var Router = require('named-routes');
@@ -8,7 +9,9 @@ var router = new Router();
 router.extendExpress(app);
 router.registerAppHelpers(app);
 
-
+// Set up cookie parser middleware
+const cookieParser = require('cookie-parser');
+app.use(cookieParser());
 // installing bcrypt module to convert login [password into a hashed password]
 const bcrypt = require("bcrypt");
 
@@ -72,9 +75,12 @@ app.get('/', async function (req, res) {
   // const b = " ";
   let bike = await Bike.find({}).limit(10);
   // console.log(bike);
-  res.render('index', { bike });
+  const bikeCount = await Bike.countDocuments({});
+  res.render('index', { bike, bikeCount });
 
 });
+
+
 // End
 // Add Data into database form render
 
@@ -234,7 +240,8 @@ const userSchema = mongoose.Schema({
     type: String, default: ''
   },
   joined: { type: Date, default: Date.now },
-  isVerified: {type: Boolean,required: true, default: false
+  isVerified: {
+    type: Boolean, required: true, default: false
 
   }
 });
@@ -247,30 +254,30 @@ const User = mongoose.model('User', userSchema);
 
 
 // Create a nodemailer transport
-const transport = nodemailer.createTransport({
-  service: 'Gmail',
-  auth: {
-    user: 'myemail@gmail.com',
-    pass: 'mypassword'
-  }
-});
+// const transport = nodemailer.createTransport({
+//   service: 'Gmail',
+//   auth: {
+//     user: 'myemail@gmail.com',
+//     pass: 'mypassword'
+//   }
+// });
 
 // Function to send verification email
-function sendVerificationEmail(email, token) {
-  const mailOptions = {
-    from: 'vipinnagar8700@gmail.com',
-    to: email,
-    subject: 'Verify Your Email',
-    html: `<p>Please click the following link to verify your email:</p><p>http://localhost:2222/verify?token=${token}</p>`
-  };
-  transport.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.log(error);
-    } else {
-      console.log('Email sent: ' + info.response);
-    }
-  });
-}
+// function sendVerificationEmail(email, token) {
+//   const mailOptions = {
+//     from: 'vipinnagar8700@gmail.com',
+//     to: email,
+//     subject: 'Verify Your Email',
+//     html: `<p>Please click the following link to verify your email:</p><p>http://localhost:2222/verify?token=${token}</p>`
+//   };
+//   transport.sendMail(mailOptions, (error, info) => {
+//     if (error) {
+//       console.log(error);
+//     } else {
+//       console.log('Email sent: ' + info.response);
+//     }
+//   });
+// }
 
 // Route to handle verification requests
 
@@ -319,23 +326,23 @@ app.get('/register', async function (req, res) {
 });
 
 
-app.post("/api/register", async (req, res) => {
-  console.log(req.body);
-  try {
-    const hashedPwd = await bcrypt.hash(req.body.password, saltRounds);
-    const insertResult = await User.create({
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      email: req.body.email,
-      password: hashedPwd,
-    });
-    // res.send(insertResult);
-    res.redirect('/login')
-  } catch (error) {
-    console.log(error);
-    res.status(500).send("User Already Exists Please  try to login your Account or forgot password with Email");
-  }
-});
+// app.post("/api/register", async (req, res) => {
+//   console.log(req.body);
+//   try {
+//     const hashedPwd = await bcrypt.hash(req.body.password, saltRounds);
+//     const insertResult = await User.create({
+//       firstName: req.body.firstName,
+//       lastName: req.body.lastName,
+//       email: req.body.email,
+//       password: hashedPwd,
+//     });
+//     // res.send(insertResult);
+//     res.redirect('/login')
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).send("User Already Exists Please  try to login your Account or forgot password with Email");
+//   }
+// });
 
 
 
@@ -344,31 +351,31 @@ app.post("/api/register", async (req, res) => {
 // Start login page
 
 //Handling user login
-app.post("/api/login", async function (req, res) {
-  try {
-    // check if the user exists
-    const user = await User.findOne({ email: req.body.email });
-    console.log(user);
-    if (user) {
-      const cmp = await bcrypt.compare(req.body.password, user.password);
-      if (cmp) {
-        //check if password matches then account successfully login
-        const result = req.body.password === user.password;
-        // console.log(result);
-        // if (result) {
-        // res.send("Login Successfully");
-        res.redirect('Home');
-      } else {
-        res.status(400).json({ error: "password doesn't match" });
-      }
-    } else {
-      res.status(400).json({ error: "User doesn't exist" });
-    }
-  } catch (error) {
-    console.log(error);
-    res.status(400).json({ error });
-  }
-});
+// app.post("/api/login", async function (req, res) {
+//   try {
+//     // check if the user exists
+//     const user = await User.findOne({ email: req.body.email });
+//     console.log(user);
+//     if (user) {
+//       const cmp = await bcrypt.compare(req.body.password, user.password);
+//       if (cmp) {
+//         //check if password matches then account successfully login
+//         const result = req.body.password === user.password;
+//         // console.log(result);
+//         // if (result) {
+//         // res.send("Login Successfully");
+//         res.redirect('Home');
+//       } else {
+//         res.status(400).json({ error: "password doesn't match" });
+//       }
+//     } else {
+//       res.status(400).json({ error: "User doesn't exist" });
+//     }
+//   } catch (error) {
+//     console.log(error);
+//     res.status(400).json({ error });
+//   }
+// });
 
 
 // Login api
@@ -385,14 +392,24 @@ app.get('/login', async function (req, res) {
 
 
 // End of login page
+// app.get('/api/:id', async function (req, res) {
+
+//   console.log(req.body)
+//   let bike = await User.findOne({}, '_id')
+
+//   res.render('Home', { id: bike._id });
+//   // res.render('Home')
+
+// });
+
 app.get('/api/:id', async function (req, res) {
-
   console.log(req.body)
-  let bike = await User.findOne({}, '_id')
-  res.render('Home', { id: bike._id });
-  // res.render('Home')
+  const bikeCount = await Bike({})
 
+  res.render('Home', { count: bikeCount });
 });
+
+
 
 
 //  User forgot Password and reset new password
@@ -406,32 +423,32 @@ app.get('/forgotPassword', async function (req, res) {
 });
 
 
-app.post("/password-reset-link", async (req, res) => {
-  try {
-    const { email } = req.body;
+// app.post("/password-reset-link", async (req, res) => {
+//   try {
+//     const { email } = req.body;
 
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).send("User with given email doesn't exist");
-    }
+//     const user = await User.findOne({ email });
+//     if (!user) {
+//       return res.status(400).send("User with given email doesn't exist");
+//     }
 
-    let token = await User.findOne({ userId: user._id });
-    if (!token) {
-      token = await new User({
-        userId: user._id,
-        token: crypto.randomBytes(32).toString("hex"),
-      }).save();
-    }
+//     let token = await User.findOne({ userId: user._id });
+//     if (!token) {
+//       token = await new User({
+//         userId: user._id,
+//         token: crypto.randomBytes(32).toString("hex"),
+//       }).save();
+//     }
 
-    const resetLink = `${process.env.BASE_URL}/password-reset/${user._id}/${token.token}`;
-    await sendEmail(user.email, "Password reset link", resetLink);
+//     const resetLink = `${process.env.BASE_URL}/password-reset/${user._id}/${token.token}`;
+//     await sendEmail(user.email, "Password reset link", resetLink);
 
-    res.send("Password reset link sent to your email account");
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("An error occurred");
-  }
-});
+//     res.send("Password reset link sent to your email account");
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send("An error occurred");
+//   }
+// });
 
 
 
@@ -471,8 +488,123 @@ app.get('/fetchUser', (req, res) => {
 //setting view engine to ejs
 app.set("view engine", "ejs");
 
+// const createToken = async () => {
+//   const token = await jwt.sign({ _id: "1234sqwdfebrjkuhgfdcsxazq" }, "mynameisvipinagarimfulldeveloperwsee", {
+//     expiresIn: "2 seconds"
+//   });
+//   console.log(token);
+
+//   const userver = await jwt.verify(token, "mynameisvipinagarimfulldeveloperwsee");
+//   console.log(userver);
 
 
+// }
+
+// createToken();
+
+// User.methods.generateAuthToken = async function () {
+//   const user = this
+//   try {
+//     const token = jwt.sign({ _id: this._id.toString() }, "mynameisvipinnagarandimadeveloper");
+//     console.log(token);
+//   } catch (error) {
+//     res.send("the error part" + error);
+//     console.log("the error part" + error);
+//   }
+
+// }
+
+
+// convert password into hashed password
+// User.pre("save", async function (next) {
+
+//   if (this.isModified("password")) {
+//     console.log(`the password is ${this.password}`);
+//     this.password = await bcrypt.hash(this.password, 10);
+//     console.log(`the current password is ${this.password}`);
+
+//     this.confirmpassword = undefined;
+//   }
+// })
+
+
+
+// post api to save data in  database
+
+// Route for handling registration form submission
+app.post('/api/register', async (req, res) => {
+  try {
+    // Hash password before storing it in database
+    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+
+    // Create new user in database
+    const user = await User.create({
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      email: req.body.email,
+      password: hashedPassword
+    });
+
+    // Create JWT token and store it in a cookie
+    const token = jwt.sign({ userId: user.id }, 'mysecretkey');
+    res.cookie('jwt', token, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
+
+    // Redirect to homepage
+    res.redirect('/');
+  } catch (error) {
+    console.error(error);
+    res.send('An error occurred while registering');
+  }
+});
+
+// router for handling login request
+
+app.post('/api/login', async (req, res) => {
+  try {
+    // Find user with given email
+    const user = await User.findOne({ email: req.body.email });
+
+    // Check if password is correct
+    const isPasswordCorrect = await bcrypt.compare(req.body.password, user.password);
+    if (!isPasswordCorrect) {
+      throw new Error('Incorrect password');
+    }
+
+    // Create JWT token and store it in a cookie
+    const token = jwt.sign({ userId: user.id }, 'mysecretkey');
+    res.cookie('jwt', token, { httpOnly: true, maxAge: 1 * 60 * 60 * 1000 });
+    console.log(token);
+    // Send success response
+    // res.status(200).send('Login successful');
+    res.render('Home')
+  } catch (error) {
+    console.error(error);
+    res.status(400).send('Login failed');
+  }
+});
+
+
+// app.get('/api/user', async (req, res) => {
+//   try {
+//     // Get JWT token from cookie
+//     const token = req.cookies.jwt;
+
+//     // Verify token and extract payload data
+//     const payload = jwt.verify(token, 'mysecretkey');
+
+//     // Find user with the ID from the payload
+//     const user = await User.findById(payload.userId);
+
+//     // Send user data in response
+//     res.status(200).json(user);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(401).send('Unauthorized');
+//   }
+// });
+
+
+// Create JWT token and store it in a cookie
 app.listen(2222, function () {
   console.log("Server is running on port 2222 ");
 });
