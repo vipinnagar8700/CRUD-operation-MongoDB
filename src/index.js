@@ -20,11 +20,19 @@ const bcrypt = require("bcrypt");
 const nodemailer = require('nodemailer');
 // const jwt = require('jsonwebtoken');
 
+const sendMail = require("../src/sendMail");
 
-
+// const auth = require("auth");
 
 // RESET PASSWORD//======================================================================
 const crypto = require("crypto");//user to generate random token 
+
+
+// Generate a 32-byte (256-bit) key
+const secretKey = crypto.randomBytes(32).toString('hex');
+
+// console.log(secretKey);
+
 
 const jwt = require('jsonwebtoken'); //to generate token
 
@@ -216,7 +224,7 @@ app.get('/delete/(:id)', function (req, res, next) {
   })
 });
 
-
+//////////////////////////////////////////////////////Bike Schema end//////////////////////////////////////////
 // ==================================================LOGIN REGISTER===============================================
 
 // Creating new schema for User Login or Register page
@@ -250,8 +258,213 @@ const userSchema = mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
+app.get('/user', async function (req, res) {
+  let user = await User.find({}).limit(10);
+  const userCount = await User.count({});
+  // console.log(user);
+  res.render('user',{user,userCount} );
+});
+
+// register with a set of 10 limit on window
+app.get('/register', async function (req, res) {
+  let user = await User.find({}).limit(10);
+  // console.log(user);
+  res.render('register', { user });
+
+});
+
+// const createToken = async () => {
+//   const token = await jwt.sign({ _id: "1234sqwdfebrjkuhgfdcsxazq" }, "mynameisvipinagarimfulldeveloperwsee", {
+//     expiresIn: "2 seconds"
+//   });
+//   console.log(token);
+
+//   const userver = await jwt.verify(token, "mynameisvipinagarimfulldeveloperwsee");
+//   console.log(userver);
 
 
+// }
+
+// createToken();
+
+// User.methods.generateAuthToken = async function () {
+//   const user = this
+//   try {
+//     const token = jwt.sign({ _id: this._id.toString() }, "mynameisvipinnagarandimadeveloper");
+//     console.log(token);
+//   } catch (error) {
+//     res.send("the error part" + error);
+//     console.log("the error part" + error);
+//   }
+
+// }
+
+
+// convert password into hashed password
+// User.pre("save", async function (next) {
+
+//   if (this.isModified("password")) {
+//     console.log(`the password is ${this.password}`);
+//     this.password = await bcrypt.hash(this.password, 10);
+//     console.log(`the current password is ${this.password}`);
+
+//     this.confirmpassword = undefined;
+//   }
+// })
+
+
+
+// post api to save data in  database
+
+// Route for handling registration form submission
+app.post('/api/register', async (req, res) => {
+  try {
+    // Hash password before storing it in database
+    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+
+    // Create new user in database
+    const user = await User.create({
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      email: req.body.email,
+      password: hashedPassword
+    });
+
+    // Create JWT token and store it in a cookie
+    const token = jwt.sign({ userId: user.id }, secretKey);
+    res.cookie('jwt', token, { httpOnly: true, maxAge: 3 * 60 * 1000 });
+
+    // Redirect to homepage
+    res.redirect('/');
+  } catch (error) {
+    console.error(error);
+    res.send('An error occurred while registering');
+  }
+});
+
+// Login api
+app.get('/login', async function (req, res) {
+  res.render('login');
+});
+
+// app.get('/api/login', async function (req, res) {
+//   console.log(req.body)
+
+//   const user = await User.findOne({ username: req.body.username, password: req.body.password });
+//   const bikeCount = await Bike({})
+//   console.log(user);
+//   res.render('Home', { name: user.name, count: bikeCount });
+// });
+
+
+
+
+// router for handling login request
+
+app.post('/api/login', async (req, res) => {
+  try {
+    // Find user with given email
+    const user = await User.findOne({ email: req.body.email });
+
+    // Check if password is correct
+    const isPasswordCorrect = await bcrypt.compare(req.body.password, user.password);
+    if (!isPasswordCorrect) {
+      throw new Error('Incorrect password');
+    }
+
+    // Create JWT token and store it in a cookie
+    const token = jwt.sign({ userId: user.id }, secretKey);
+    res.cookie('jwt', token, { httpOnly: true, maxAge: 3 * 60 * 1000 });
+    console.log(token);
+    // Send success response
+    // res.status(200).send('Login successful');
+    res.render('secret', { name: user.name })
+  } catch (error) {
+    console.error(error);
+    res.status(400).send('Login failed');
+  }
+});
+
+
+// const auth = async (req, res, next) => {
+//   try {
+//     const token = req.cookies.jwt;
+//     const verifyUser = jwt.verify(token, secretKey);
+//     console.log(verifyUser);
+
+//     const userverify = await User.findById({ _id: verifyUser._id });
+//     console.log(userverify);
+
+//     if (!userverify) {
+//       throw new Error('User not found');
+//     }
+//     req.user = userverify;
+//     next();
+
+//   } catch (error) {
+//     console.error(error);
+//     res.status(401).send({ message: 'Unauthorized' });
+//   }
+// };
+const auth = async (req, res, next) => {
+  try {
+    const token = req.cookies.jwt;
+    const decodedToken = jwt.verify(token, secretKey);
+    // console.log(decodedToken);
+    const userId = decodedToken.userId;
+    console.log(userId);
+    const user = await User.findOne({ _id: userId });
+    console.log(user);
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+    req.token = token;
+    req.user = user;
+    next();
+  } catch (error) {
+    res.status(401).send(error.message);
+  }
+};
+
+
+
+// lopgout api User schema
+app.get('/logOut',auth, async  (req, res) =>{
+  let user = await User.find({}).limit(10);///to show user data 
+
+
+  try {
+
+    console.log(req.user);
+    // req.user.tokens = req.user.tokens.filter((currElement) => {
+    //   return currElement.token   req.token
+    // })
+    res.clearCookie("jwt");
+    console.log("logOut Successfully");
+    await req.user.save();
+    res.render("user",{user});
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+// LogOut api
+
+
+// const auth = async (req, res, next) => {
+//   try {
+//     const token = req.cookies.jwt;
+//     if (!token) {
+//       throw new Error('No token provided');
+//     }
+
+//     const decodedToken = jwt.verify(token, secretKey);
+//     req.user = decodedToken.user;
+//     next();
+//   } catch (error) {
+//     res.status(401).send({ error: 'Invalid token' });
+//   }
+// };
 
 // Create a nodemailer transport
 // const transport = nodemailer.createTransport({
@@ -297,119 +510,12 @@ const User = mongoose.model('User', userSchema);
 //     });
 // });
 
-// Register user
-// app.post('/api/register', function (req, res) {
-//   console.log(req.body);
-//   const vipin = new User({
-//     firstName: req.body.firstName,
-//     lastName:req.body.lastName,
-//     email:req.body.email,
-//     password:req.body.password
 
-//   })
-//   vipin.save().then((err, data) => {
-//     console.log(data);
-//     data = User;
-//     if (!err)
-//       req.flash('success', 'User added successfully!');
-//     // res.redirect('/');
-//   })
-
-// });
-
-// register with a set of 10 limit on window
-app.get('/register', async function (req, res) {
-  let user = await User.find({}).limit(10);
-  // console.log(user);
-  res.render('register', { user });
-
-});
-
-
-// app.post("/api/register", async (req, res) => {
-//   console.log(req.body);
-//   try {
-//     const hashedPwd = await bcrypt.hash(req.body.password, saltRounds);
-//     const insertResult = await User.create({
-//       firstName: req.body.firstName,
-//       lastName: req.body.lastName,
-//       email: req.body.email,
-//       password: hashedPwd,
-//     });
-//     // res.send(insertResult);
-//     res.redirect('/login')
-//   } catch (error) {
-//     console.log(error);
-//     res.status(500).send("User Already Exists Please  try to login your Account or forgot password with Email");
-//   }
-// });
-
-
-
-// end of Register page 
-
-// Start login page
-
-//Handling user login
-// app.post("/api/login", async function (req, res) {
-//   try {
-//     // check if the user exists
-//     const user = await User.findOne({ email: req.body.email });
-//     console.log(user);
-//     if (user) {
-//       const cmp = await bcrypt.compare(req.body.password, user.password);
-//       if (cmp) {
-//         //check if password matches then account successfully login
-//         const result = req.body.password === user.password;
-//         // console.log(result);
-//         // if (result) {
-//         // res.send("Login Successfully");
-//         res.redirect('Home');
-//       } else {
-//         res.status(400).json({ error: "password doesn't match" });
-//       }
-//     } else {
-//       res.status(400).json({ error: "User doesn't exist" });
-//     }
-//   } catch (error) {
-//     console.log(error);
-//     res.status(400).json({ error });
-//   }
-// });
-
-
-// Login api
-app.get('/login', async function (req, res) {
-  res.render('login');
-});
-
-// LogOut api
 
 // app.get('/logOut', admin.logOut async function (req, res) {
 //   res.render('index');
 
 // });
-
-
-// End of login page
-// app.get('/api/:id', async function (req, res) {
-
-//   console.log(req.body)
-//   let bike = await User.findOne({}, '_id')
-
-//   res.render('Home', { id: bike._id });
-//   // res.render('Home')
-
-// });
-
-app.get('/api/:id', async function (req, res) {
-  console.log(req.body)
-  const bikeCount = await Bike({})
-
-  res.render('Home', { count: bikeCount });
-});
-
-
 
 
 //  User forgot Password and reset new password
@@ -421,6 +527,52 @@ app.get('/forgotPassword', async function (req, res) {
   }
 
 });
+
+
+// 1. Route to handle password reset requests
+// app.post('/password-reset', async (req, res) => {
+//   const { email } = req.body;
+
+// 2. Generate a unique token
+// const token = crypto.randomBytes(20).toString('hex');
+// const expiresAt = Date.now() + 3600000; // 1 hour from now
+
+// 3. Store the token in the user's document in MongoDB
+// await User.findOneAndUpdate({ email }, { resetToken: token, resetTokenExpiresAt: expiresAt });
+
+// 4. Send an email to the user's email address
+//   const resetLink = `http://yourapp.com/reset-password?token=${token}`;
+//   await sendEmail(email, resetLink);
+
+//   res.send('Password reset link sent');
+// });
+
+// 5. Route to handle password reset requests with token
+app.get('/reset-password', async (req, res) => {
+  const { token } = req.query;
+
+  // 6. Verify that the token is valid and has not expired
+  const user = await User.findOne({ resetToken: token, resetTokenExpiresAt: { $gt: Date.now() } });
+  if (!user) {
+    res.status(400).send('Invalid or expired token');
+    return;
+  }
+
+  // 7. Allow the user to reset their password
+  res.render('reset-password-form');
+});
+
+// 8. Route to handle password reset form submission
+app.post('/reset-password', async (req, res) => {
+  const { token, password } = req.body;
+
+  // 9. Update the user's document in MongoDB with the new password
+  const user = await User.findOneAndUpdate({ resetToken: token }, { password });
+
+  res.send('Password reset successfully');
+});
+
+app.get ('/mail',sendMail );
 
 
 // app.post("/password-reset-link", async (req, res) => {
@@ -488,100 +640,19 @@ app.get('/fetchUser', (req, res) => {
 //setting view engine to ejs
 app.set("view engine", "ejs");
 
-// const createToken = async () => {
-//   const token = await jwt.sign({ _id: "1234sqwdfebrjkuhgfdcsxazq" }, "mynameisvipinagarimfulldeveloperwsee", {
-//     expiresIn: "2 seconds"
-//   });
-//   console.log(token);
-
-//   const userver = await jwt.verify(token, "mynameisvipinagarimfulldeveloperwsee");
-//   console.log(userver);
 
 
-// }
+// Secret page api
 
-// createToken();
-
-// User.methods.generateAuthToken = async function () {
-//   const user = this
-//   try {
-//     const token = jwt.sign({ _id: this._id.toString() }, "mynameisvipinnagarandimadeveloper");
-//     console.log(token);
-//   } catch (error) {
-//     res.send("the error part" + error);
-//     console.log("the error part" + error);
-//   }
-
-// }
-
-
-// convert password into hashed password
-// User.pre("save", async function (next) {
-
-//   if (this.isModified("password")) {
-//     console.log(`the password is ${this.password}`);
-//     this.password = await bcrypt.hash(this.password, 10);
-//     console.log(`the current password is ${this.password}`);
-
-//     this.confirmpassword = undefined;
-//   }
-// })
-
-
-
-// post api to save data in  database
-
-// Route for handling registration form submission
-app.post('/api/register', async (req, res) => {
-  try {
-    // Hash password before storing it in database
-    const hashedPassword = await bcrypt.hash(req.body.password, 10);
-
-    // Create new user in database
-    const user = await User.create({
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      email: req.body.email,
-      password: hashedPassword
-    });
-
-    // Create JWT token and store it in a cookie
-    const token = jwt.sign({ userId: user.id }, 'mysecretkey');
-    res.cookie('jwt', token, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
-
-    // Redirect to homepage
-    res.redirect('/');
-  } catch (error) {
-    console.error(error);
-    res.send('An error occurred while registering');
-  }
+app.get('/secret', auth, function (req, res) {
+  // console.log(`This is the cookie user ${req.cookies.jwt}`);
+  res.render('secret');
 });
+////////////////////////////////////////////////////end User authentication///////////////////////////////////////////
 
-// router for handling login request
+// //////////  /////////////////   //////////////  /Reset password ////////////////////////////////////////////////
 
-app.post('/api/login', async (req, res) => {
-  try {
-    // Find user with given email
-    const user = await User.findOne({ email: req.body.email });
 
-    // Check if password is correct
-    const isPasswordCorrect = await bcrypt.compare(req.body.password, user.password);
-    if (!isPasswordCorrect) {
-      throw new Error('Incorrect password');
-    }
-
-    // Create JWT token and store it in a cookie
-    const token = jwt.sign({ userId: user.id }, 'mysecretkey');
-    res.cookie('jwt', token, { httpOnly: true, maxAge: 1 * 60 * 60 * 1000 });
-    console.log(token);
-    // Send success response
-    // res.status(200).send('Login successful');
-    res.render('Home')
-  } catch (error) {
-    console.error(error);
-    res.status(400).send('Login failed');
-  }
-});
 
 
 // app.get('/api/user', async (req, res) => {
@@ -590,7 +661,7 @@ app.post('/api/login', async (req, res) => {
 //     const token = req.cookies.jwt;
 
 //     // Verify token and extract payload data
-//     const payload = jwt.verify(token, 'mysecretkey');
+//     const payload = jwt.verify(token, 'secretKey');
 
 //     // Find user with the ID from the payload
 //     const user = await User.findById(payload.userId);
@@ -604,7 +675,8 @@ app.post('/api/login', async (req, res) => {
 // });
 
 
+
 // Create JWT token and store it in a cookie
-app.listen(2222, function () {
-  console.log("Server is running on port 2222 ");
+app.listen(8080, function () {
+  console.log("Server is running on port 8080 ");
 });
