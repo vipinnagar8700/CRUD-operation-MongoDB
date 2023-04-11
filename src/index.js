@@ -17,10 +17,13 @@ const bcrypt = require("bcrypt");
 
 // installing Nodemailer allow us to send email.
 // const nodemailer = require("nodemailer");
-const nodemailer = require('nodemailer');
+// const nodemailer = require('nodemailer');
 // const jwt = require('jsonwebtoken');
 
-const sendMail = require("../src/sendMail");
+// const sendMail = require("../src/sendMail");
+
+
+// const UserOtpVerification = require("../src/UserOtpVerification");
 
 // const auth = require("auth");
 
@@ -243,26 +246,156 @@ const userSchema = mongoose.Schema({
     match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please fill a valid email address']
 
   },
+  mob: {
+    type: Number, required: true, unique: true
+  },
   password: { type: String, required: true },
   verificationToken: {
     type: String, default: ''
   },
   joined: { type: Date, default: Date.now },
   isVerified: {
-    type: Boolean, required: true, default: false
+    type: Number,default: 0
 
   }
 });
+
+// TO generate Verification OTP
+// const SendOTPVerificationEmail = async ({ _id, email }, res) => {
+//   try {
+//     const otp = `${Math.floor(1000 + Math.random() * 9000)}`;
+
+//     const mailOptions = {
+//       from: secretKey,
+//       to: email,
+// subject: "verify Your Email",
+// html:`<p>Enter<b> ${otp} </b>in the app to verify your email and complete the registeration</p><p>This code <b>expires in 1 hour</b></p>`,
+//     };
+
+
+//     // hash the otp
+// const saltRounds= 10;
+// const hashedOTP = await bcrypt.hash(otp,saltRounds);
+// const newOtpVerification = new UserOtpVerification({
+//   userId: _id,
+//   otp:hashedOTP,
+//   createdAt:Date.now(),
+//   expiresAt:Date.now() + 3600000,
+// });
+// // save otp record
+// await newOtpVerification.save();
+// await transporter.sendMail(mailOptions);
+// res.json({
+//   status:"pending",
+//   message:"Verification otp email send",
+//   data:{
+//     userId:_id,
+//     email,
+//   }
+
+// })
+
+//   } catch (error) {
+//     res.json({
+//       status:"failed",
+//       message:error.message,
+//     }); 
+
+//   }
+// };
+
+const nodemailer = require('nodemailer');
+const sendVerifyMail = async (name, email, user_id) => {
+  try {
+
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.ethereal.email',
+      port: 587,
+      secure: false,
+      requireTLS: true,
+      auth: {
+        user: 'dakota86@ethereal.email',
+        pass: 'eR4RxysXXw15QHQTCY'
+      }
+    });
+    const mailOptions = {
+      from: 'dakota86@ethereal.email',
+      to: email,
+      subject: 'For verification mail',
+      html: '<p>Hii' + name + ',please click here to <a href="http://localhost:8080/verify?id=' + user_id + '">Verify</a>Your Mail.</p>'
+    }
+    transporter.sendMail(mailOptions, function (error, info) {
+      if (error) {
+        console.log(error);
+      } else {
+        console.log("Email has been send:-", info.response);
+      }
+    })
+  } catch (error) {
+    console.log(error.message);
+  }
+}
+
+
+
+// app.post('/api/register', async (req, res) => {
+//   try {
+//     // Hash password before storing it in database
+//     const hashedPassword = await bcrypt.hash(req.body.password, 10);
+
+//     // Create new user in database
+//     const user = await User.create({
+//       firstName: req.body.firstName,
+//       lastName: req.body.lastName,
+//       mob: req.body.mob,
+//       email: req.body.email,
+//       password: hashedPassword
+//     });
+
+//     // Create JWT token and store it in a cookie
+//     const token = jwt.sign({ userId: user.id }, secretKey);
+//     res.cookie('jwt', token, { httpOnly: true, maxAge: 3 * 60 * 1000 });
+
+//     // Send OTP verification email
+//     await SendOTPVerificationEmail(user, res);
+
+//     // Redirect to homepage
+//     res.redirect('/');
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).send('An error occurred while registering');
+//   }
+// });
+
 
 // creating new model for User
 
 const User = mongoose.model('User', userSchema);
 
+const VerifyMail = async (req, res) => {
+
+  try {
+    const updateInfo = User.updateOne({ _id: req.params.userid }, { $set: { isVerified: 1 } });
+
+    console.log(updateInfo);
+    res.send("Email-verified");
+
+  } catch (error) {
+    console.log(error.message);
+  }
+
+}
+
+
+app.get('/verify',VerifyMail, async function (req, res) {
+  res.send("successfully Verified");
+});
+
 app.get('/user', async function (req, res) {
   let user = await User.find({}).limit(10);
   const userCount = await User.count({});
   // console.log(user);
-  res.render('user',{user,userCount} );
+  res.render('user', { user, userCount });
 });
 
 // register with a set of 10 limit on window
@@ -317,7 +450,32 @@ app.get('/register', async function (req, res) {
 // post api to save data in  database
 
 // Route for handling registration form submission
-app.post('/api/register', async (req, res) => {
+// app.post('/api/register', async (req, res) => {
+//   try {
+//     // Hash password before storing it in database
+//     const hashedPassword = await bcrypt.hash(req.body.password, 10);
+
+//     // Create new user in database
+//     const user = await User.create({
+//       firstName: req.body.firstName,
+//       lastName: req.body.lastName,
+//       mob: req.body.mob,
+//       email: req.body.email,
+//       password: hashedPassword
+//     });
+
+//     // Create JWT token and store it in a cookie
+//     const token = jwt.sign({ userId: user.id }, secretKey);
+//     res.cookie('jwt', token, { httpOnly: true, maxAge: 3 * 60 * 1000 });
+//     SendOTPVerificationEmail(user,res);
+//     // Redirect to homepage
+//     res.redirect('/');
+//   } catch (error) {
+//     console.error(error);
+//     res.send('An error occurred while registering');
+// //   }
+// });
+app.post('/api/register', async (req, res, next) => {
   try {
     // Hash password before storing it in database
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
@@ -326,6 +484,7 @@ app.post('/api/register', async (req, res) => {
     const user = await User.create({
       firstName: req.body.firstName,
       lastName: req.body.lastName,
+      mob: req.body.mob,
       email: req.body.email,
       password: hashedPassword
     });
@@ -334,13 +493,23 @@ app.post('/api/register', async (req, res) => {
     const token = jwt.sign({ userId: user.id }, secretKey);
     res.cookie('jwt', token, { httpOnly: true, maxAge: 3 * 60 * 1000 });
 
+    // Send OTP verification email
+    // await SendOTPVerificationEmail(user, res);
+
     // Redirect to homepage
-    res.redirect('/');
-  } catch (error) {
-    console.error(error);
-    res.send('An error occurred while registering');
+    sendVerifyMail(req.body.name, req.body.email, user._id)
+    res.redirect('/user');
+  } catch (err) {
+    // Pass error to next middleware
+    return next(err);
   }
 });
+
+// // Error handling middleware
+// app.use((err, req, res, next) => {
+//   console.error(err);
+//   res.status(500).send('An error occurred while registering');
+// });
 
 // Login api
 app.get('/login', async function (req, res) {
@@ -383,6 +552,19 @@ app.post('/api/login', async (req, res) => {
     console.error(error);
     res.status(400).send('Login failed');
   }
+});
+
+
+
+// Delete DAta from Database
+app.get('/user/delete/(:id)', function (req, res, next) {
+  User.findByIdAndRemove(req.params.id).then((err, data) => {
+    console.log(data);
+    data = User;
+    if (!err)
+      res.send('Delete', 'Data Deleted successfully!');
+    res.redirect('/user');
+  })
 });
 
 
@@ -430,7 +612,7 @@ const auth = async (req, res, next) => {
 
 
 // lopgout api User schema
-app.get('/logOut',auth, async  (req, res) =>{
+app.get('/logOut', auth, async (req, res) => {
   let user = await User.find({}).limit(10);///to show user data 
 
 
@@ -443,7 +625,7 @@ app.get('/logOut',auth, async  (req, res) =>{
     res.clearCookie("jwt");
     console.log("logOut Successfully");
     await req.user.save();
-    res.render("user",{user});
+    res.render("user", { user });
   } catch (error) {
     res.status(500).send(error);
   }
@@ -572,7 +754,7 @@ app.post('/reset-password', async (req, res) => {
   res.send('Password reset successfully');
 });
 
-app.get ('/mail',sendMail );
+// app.get('/mail', sendMail);
 
 
 // app.post("/password-reset-link", async (req, res) => {

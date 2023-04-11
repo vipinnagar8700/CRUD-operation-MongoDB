@@ -22,7 +22,7 @@
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 
-<body>
+<body class="overflow-hidden">
   <!-- Section: Design Block -->
   <section class="Register text-center text-lg-start jumbotron">
     <!-- Jumbotron -->
@@ -35,7 +35,7 @@
               ">
             <div class="card-body p-5 shadow-5 text-center">
               <h2 class="fw-bold mb-5">Sign up now</h2>
-              <form action="/api/register" method="POST">
+              <form action="/api/register" method="POST" onsubmit="return validation()">
                 <!-- 2 column grid layout with text inputs for the first and last names -->
                 <div class="row">
                   <div class="col-md-6 mb-4">
@@ -43,6 +43,7 @@
                       <input type="hidden" class="form-control " name="Id" value="">
                       <input type="text" id="firstName" value=" " name="firstName" class="form-control"
                         placeholder="First Name.." required />
+                      <span id="usererror" class="text-danger font-weight-bold"></span>
                       <label class="form-label" for="firstName">First name</label>
                     </div>
                   </div>
@@ -50,29 +51,39 @@
                     <div class="form-outline">
                       <input type="text" id="lastName" value="" name="lastName" class="form-control"
                         placeholder="Last Name.." required />
+                      <span id="usererrors" class="text-danger font-weight-bold"></span>
                       <label class="form-label" for="lastName">Last name</label>
                     </div>
                   </div>
                 </div>
-
+                <!-- mobile no -->
+                <div class="form-outline mb-4">
+                  <input type="mob" id="mob" value="" name="mob" class="form-control" placeholder="Mobile no"
+                    required />
+                  <span id="moberror" class="text-danger font-weight-bold"></span>
+                  <label class="form-label" for="Mobile No">Mobile No</label>
+                </div>
                 <!-- Email input -->
                 <div class="form-outline mb-4">
-                  <input type="email" id="email" vlaue="" name="email" class="form-control" placeholder="E-mail"
+                  <input type="email" id="email" value="" name="email" class="form-control" placeholder="E-mail"
                     required />
+                  <span id="emailerror" class="text-danger font-weight-bold"></span>
                   <label class="form-label" for="email">Email address</label>
                 </div>
+
 
                 <!-- Password input -->
                 <div class="form-outline mb-4">
                   <input type="password" id="password" value="" name="password" class="form-control"
                     placeholder="password" required />
-                    
+                  <span id="passworderror" class="text-danger font-weight-bold"></span>
                   <label class="form-label" for="password">Password</label>
                 </div>
 
                 <!-- Checkbox -->
                 <div class="form-check d-flex justify-content-center mb-4">
-                  <input class="form-check-input me-2" type="checkbox" value="" id="form2Example33" checked />
+                  <input class="form-check-input me-2" type="checkbox" value="" id="form2Example33" checked required />
+                  <span id="usererror" class="text-danger font-weight-bold"></span>
                   <label class="form-check-label" for="form2Example33">
                     Subscribe to our newsletter
                   </label>
@@ -82,7 +93,7 @@
                 <button type="submit" class="btn btn-primary btn-block mb-4">
                   Sign up
                 </button>
-                
+
                 or
                 <a type="submit" href="/login" class="btn btn-success btn-block mb-4">
                   login
@@ -124,6 +135,7 @@
                 <th scope="col">ID</th>
                 <th scope="col">First</th>
                 <th scope="col">Last</th>
+                <th scope="col">Mobile</th>
                 <th scope="col">E-mail</th>
 
               </tr>
@@ -141,6 +153,9 @@
                     <%= b.lastName %>
                   </td>
                   <td>
+                    <%= b.mob %>
+                  </td>
+                  <td>
                     <%= b.email %>
                   </td>
                 </tr>
@@ -153,7 +168,65 @@
     <!-- Jumbotron -->
   </section>
   <!-- Section: Design Block -->
-  
+  <script type="text/javascript">
+    function validation() {
+
+      var firstName = document.getElementById('firstName').value;
+      var lastName = document.getElementById('lastName').value;
+      var password = document.getElementById('password').value;
+      var mob = document.getElementById('mob').value;
+      var email = document.getElementById('email').value;
+      // alert(firstName);
+
+      var usercheck = /^[A-Za-z. ]{3,8}$/;
+      var userchecks = /^[A-Za-z. ]{3,8}$/;
+      var passwordcheck = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,12}$/;
+      var emailcheck = /^[A-Za-z_]{3,}@[A-Za-z]{3,}[.]{1}[A-Za-z.]{2,6}$/;
+      var mobcheck = /^[789][0-9]{8,10}$/;
+      // fName
+      if (usercheck.test(firstName)) {
+        document.getElementById('usererror').innerHTML = " ";
+
+      } else {
+        document.getElementById('usererror').innerHTML = "** Please fill A-Z & a-z min 3 to 8 characters";
+        return false;
+      }
+      // Lname
+      if (userchecks.test(lastName)) {
+        document.getElementById('usererrors').innerHTML = " ";
+
+      } else {
+        document.getElementById('usererrors').innerHTML = "** Please fill A-Z & a-z min 3 to 8 characters";
+        return false;
+      }
+      // password
+      if (passwordcheck.test(password)) {
+        document.getElementById('passworderror').innerHTML = " ";
+
+      } else {
+        document.getElementById('passworderror').innerHTML = "** Please fill A-Z,a-z,,@#$%,1-9  min 6 to 12 characters";
+        return false;
+      }
+      // Mob
+      if (mobcheck.test(mob)) {
+        document.getElementById('moberror').innerHTML = " ";
+
+      } else {
+        document.getElementById('moberror').innerHTML = "** Please fill 0 - 9 min 10 characters";
+        return false;
+      }
+      // email
+      if (emailcheck.test(email)) {
+        document.getElementById('emailerror').innerHTML = " ";
+
+      } else {
+        document.getElementById('emailerror').innerHTML = "** Email  is Invalid";
+        return false;
+      }
+
+    }
+  </script>
+
 </body>
 
 </html>
